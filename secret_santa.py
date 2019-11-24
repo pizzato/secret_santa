@@ -8,20 +8,20 @@ import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
-N_TRIES_NO_WITHIN_GROUP = 100
+N_TRIES_NO_WITHIN_GROUP = 1000
 SMTP_SERVER = 'smtp.gmail.com'
 SMTP_PORT = 587
 
 def read_users(fn):
     line_re = re.compile(r'^([^\<]+)\s+?\<([^\>]+)>\s+?(.+?)$')
 
-    with file(fn) as fi:
+    with open(fn) as fi:
         user_groups = {}
         user_emails = {}
         for line in fi:
             group = line_re.match(line.strip())
             if not group:
-                print "Error in line: ", line
+                print("Error in line: ", line)
                 return {}, {}
 
             name, email, group = group.groups()
@@ -41,7 +41,7 @@ def draw(do_groups):
 
     pick_order = []
     while len(pick_groups) > 0:
-        pick_list = [u for u, g in pick_groups.items() if g is not previous_group]
+        pick_list = [u for u, g in pick_groups.items() if g != previous_group]
         if len(pick_list) == 0:
             pick_from_same_group = True
             pick_list = pick_groups.keys()
@@ -61,7 +61,7 @@ def send_email(name, email_address, name_match,
                gmailsender, gmailpassword,
                email_subject="Secret Santa"):
 
-    print "Sending email to "+ name, email_address
+    print("Sending email to "+ name, email_address)
     # Create message container - the correct MIME type is multipart/alternative.
     msg = MIMEMultipart('alternative')
     msg['Subject'] = email_subject
@@ -70,7 +70,7 @@ def send_email(name, email_address, name_match,
 
     # Create the body of the message (a plain-text and an HTML version).
     text = "Hi {name}\n\n".format(name=name)
-    text += "Your secret santa is: {name_match}\n\n".format(name_match=name_match)
+    text += "You are the secret santa for: {name_match}\n\n".format(name_match=name_match)
     text += " -- This is an automated email created using: https://github.com/pizzato/secret_santa -- "
 
     # Record the MIME types of both parts - text/plain and text/html.
@@ -97,7 +97,7 @@ def send_email(name, email_address, name_match,
 
 def main():
     if len(sys.argv) != 2:
-        print "USE {} <user email group file>".format(sys.argv[0])
+        print("USE {} <user email group file>".format(sys.argv[0]))
         sys.exit(0)
 
     user_groups, user_emails = read_users(sys.argv[1])
@@ -109,18 +109,18 @@ def main():
             break
 
 
-    if raw_input("Do you want to see the pick? (Y/N) ") == 'Y':
-        print ' -> '.join(pick_order)
+    if input("Do you want to see the pick? (Y/N) ").upper() == 'Y':
+        print(' -> '.join(pick_order))
 
-    print "Make sure you use application specific password if you have 2FA enable"
+    print("Make sure you use application specific password if you have 2FA enable")
 
-    gmailsender = raw_input("Gmail address:")
+    gmailsender = input("Gmail address:")
     gmailpassword = getpass.getpass("Gmail password:")
 
     for i in random.sample(range(len(pick_order)-1), len(pick_order)-1):
         send_email(pick_order[i], user_emails[pick_order[i]], pick_order[i+1], gmailsender, gmailpassword)
 
-    print "Done - all emails sent"
+    print("Done - all emails sent")
 
 if __name__ == "__main__":
     main()
